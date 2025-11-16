@@ -1,0 +1,170 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: myapp
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: myapp
+        tier: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: myapp
+    tier: frontend
+spec:
+  selector:
+    app: myapp
+    tier: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: myapp
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: myapp
+        tier: backend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: myapp
+    tier: backend
+spec:
+  selector:
+    app: myapp
+    tier: backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP
+
+---
+
+# NEW: MySQL as Deployment with 2 replicas
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+  labels:
+    app: myapp
+    tier: database
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      name: mysql
+  template:
+    metadata:
+      labels:
+        name: mysql
+        app: myapp
+        tier: database
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:latest
+          env:
+            - name: MYSQL_USER
+              value: "mysql"
+            - name: MYSQL_PASSWORD
+              value: "mysql"
+            - name: MYSQL_DATABASE
+              value: "testdb"
+            - name: MYSQL_ROOT_PASSWORD
+              value: "verysecure"
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    name: mysql
+spec:
+  selector:
+    name: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
